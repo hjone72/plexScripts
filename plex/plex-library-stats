@@ -53,11 +53,16 @@ sqlite3 -header -line "$db" "$query" | tee -a $logfile
 
 echo " " | tee -a
 
-query="select count(*) from media_items"
+query="Select count(*) \
+       From media_items Inner Join metadata_items On media_items.metadata_item_id = metadata_items.id \
+       Where Not metadata_items.metadata_type = 12"
 result=$(sqlite3 -header -line "$db" "$query")
 echo "${result:11} files in library" | tee -a $logfile
 
-query="select count(*) from media_items where bitrate is null"
+query="Select count(*) \
+       From media_items Inner Join metadata_items On media_items.metadata_item_id = metadata_items.id \
+       Where Not metadata_items.metadata_type = 12 And \
+          media_items.bitrate Is Null"
 result=$(sqlite3 -header -line "$db" "$query")
 echo "${result:11} files missing analyzation info" | tee -a $logfile
 
