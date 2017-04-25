@@ -20,14 +20,17 @@ export LD_LIBRARY_PATH=/usr/lib/plexmediaserver
 export PLEX_MEDIA_SERVER_APPLICATION_SUPPORT_DIR=/var/lib/plexmediaserver/Library/Application\ Support
 
 if [[ ! -f "$LASTRUNFILE" ]]; then
-    touch $LASTRUNFILE
+   CMD="-cmin -60" # This will scan folders newer than 60min
+else
+   CMD="-cnewer $LASTRUNFILE" # The last run file exists, use updated command.
 fi
+
 echo "$(date "+%d.%m.%Y %T") PLEX SCAN FOLDERS MODIFIED AFTER: $(date -r $LASTRUNFILE)"
 #UPDATE MOVIES
 start=$(date +'%s')
 startmovies=$(date +'%s')
 echo "Scaning movies at: $MOVIELIBRARY"
-find "$MOVIELIBRARY" -mindepth 1 -type d -cnewer $LASTRUNFILE -exec \
+find "$MOVIELIBRARY" -mindepth 1 -type d $CMD -exec \
 echo {} \; | tee -a "$LOGFILE"
 /usr/lib/plexmediaserver/Plex\ Media\ Scanner --scan --refresh --section "$MOVIESECTION" --directory {} \; | tee -a "$LOGFILE"
 echo "$(date "+%d.%m.%Y %T") Movies scanned in $(($(date +'%s') - $startmovies)) seconds" | tee -a "$LOGFILE"
@@ -35,7 +38,7 @@ echo " " | tee -a "$LOGFILE"
 #UPDATE TV SHOWS
 startseries=$(date +'%s')
 echo "Scaning TV at: $TVLIBRARY"
-find "$TVLIBRARY" -mindepth 2 -type d -cnewer $LASTRUNFILE -exec \
+find "$TVLIBRARY" -mindepth 2 -type d $CMD -exec \
 /usr/lib/plexmediaserver/Plex\ Media\ Scanner --scan --refresh --section "$TVSECTION" --directory {} \; | tee -a "$LOGFILE"
 echo "$(date "+%d.%m.%Y %T") Series scanned in $(($(date +'%s') - $startseries)) seconds" | tee -a "$LOGFILE"
 echo "$(date "+%d.%m.%Y %T") $(basename "$task") Scan completed in $(($(date +'%s') - $start)) seconds" | tee -a "$LOGFILE"
